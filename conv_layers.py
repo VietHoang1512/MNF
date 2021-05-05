@@ -66,9 +66,9 @@ class Conv2DMNF(Layer):
             self.flow_q = MaskedNVPFlow(self.nb_filter, n_flows=self.n_flows_q, name=self.name + '_fq', n_hidden=0,
                                         dim_h=self.flow_dim_h, scope=self.name)
 
-        print 'Built layer {}, output_dim: {}, input_shape: {}, flows_r: {}, flows_q: {}, use_z: {}, learn_p: {}, ' \
+        print ('Built layer {}, output_dim: {}, input_shape: {}, flows_r: {}, flows_q: {}, use_z: {}, learn_p: {}, ' \
               'pvar: {}, thres_var: {}'.format(self.name, self.nb_filter, self.input_shape, self.n_flows_r,
-                                               self.n_flows_q, self.use_z, self.learn_p, self.prior_var, self.thres_var)
+                                               self.n_flows_q, self.use_z, self.learn_p, self.prior_var, self.thres_var))
 
     def sample_z(self, size_M=1, sample=True):
         if not self.use_z:

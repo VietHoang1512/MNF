@@ -19,8 +19,8 @@ class MaskedNVPFlow(object):
         self.nonlin = nonlin
         self.scope = scope
         self.build()
-        print 'MaskedNVP flow {} with length: {}, n_hidden: {}, dim_h: {}, name: {}, ' \
-              'scope: {}'.format(self.name, n_flows, n_hidden, dim_h, name, scope)
+        print ('MaskedNVP flow {} with length: {}, n_hidden: {}, dim_h: {}, name: {}, ' \
+              'scope: {}'.format(self.name, n_flows, n_hidden, dim_h, name, scope))
 
     def build_mnn(self, fid, param_list):
         dimin = self.incoming
@@ -28,7 +28,7 @@ class MaskedNVPFlow(object):
             w = randmat((dimin, self.dim_h), name='w{}_{}_{}'.format(0, self.name, fid))
             b = tf.Variable(tf.zeros((self.dim_h,)), name='b{}_{}_{}'.format(0, self.name, fid))
             param_list.append([(w, b)])
-            for l in xrange(self.n_hidden):
+            for l in range(self.n_hidden):
                 wh = randmat((self.dim_h, self.dim_h), name='w{}_{}_{}'.format(l + 1, self.name, fid))
                 bh = tf.Variable(tf.zeros((self.dim_h,)), name='b{}_{}_{}'.format(l + 1, self.name, fid))
                 param_list[-1].append((wh, bh))
@@ -39,12 +39,12 @@ class MaskedNVPFlow(object):
             param_list[-1].append((wout, bout, wout2, bout2))
 
     def build(self):
-        for flow in xrange(self.n_flows):
+        for flow in range(self.n_flows):
             self.build_mnn('muf_{}'.format(flow), self.params)
 
     def ff(self, x, weights):
         inputs = [x]
-        for j in xrange(len(weights[:-1])):
+        for j in range(len(weights[:-1])):
             h = tf.matmul(inputs[-1], weights[j][0]) + weights[j][1]
             inputs.append(self.nonlin(h))
         wmu, bmu, wsigma, bsigma = weights[-1]
@@ -54,7 +54,7 @@ class MaskedNVPFlow(object):
 
     def get_output_for(self, z, sample=True):
         logdets = zeros_d((tf.shape(z)[0],))
-        for flow in xrange(self.n_flows):
+        for flow in range(self.n_flows):
             mask = random_bernoulli(tf.shape(z), p=0.5) if sample else 0.5
             ggmu, ggsigma = self.ff(mask * z, self.params[flow])
             gate = tf.nn.sigmoid(ggsigma)
@@ -75,11 +75,11 @@ class PlanarFlow(object):
         self.name = name
         self.scope = scope
         self.build()
-        print 'Planar flow layer with nf: {}, name: {}, scope: {}'.format(n_flows, name, scope)
+        print ('Planar flow layer with nf: {}, name: {}, scope: {}'.format(n_flows, name, scope))
 
     def build(self):
         with tf.variable_scope(self.scope):
-            for flow in xrange(self.n_flows):
+            for flow in range(self.n_flows):
                 w = randmat((self.incoming, 1), name='w_{}_{}'.format(flow, self.name))
                 u = randmat((self.incoming, 1), name='u_{}_{}'.format(flow, self.name))
                 b = tf.Variable(tf.zeros((1,)), name='b_{}_{}'.format(flow, self.name))
@@ -87,7 +87,7 @@ class PlanarFlow(object):
 
     def get_output_for(self, z, **kwargs):
         logdets = zeros_d((tf.shape(z)[0],))
-        for flow in xrange(self.n_flows):
+        for flow in range(self.n_flows):
             w, u, b = self.params[flow]
             uw = tf.reduce_sum(u * w)
             muw = -1 + tf.nn.softplus(uw)  # = -1 + T.log(1 + T.exp(uw))

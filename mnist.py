@@ -1,5 +1,5 @@
 import gzip
-import cPickle as pkl
+import pickle
 import numpy as np
 
 
@@ -11,9 +11,9 @@ class MNIST(object):
     def load_data(self):
         with gzip.open('mnist.pkl.gz', 'rb') as f:
             try:
-                train_set, valid_set, test_set = pkl.load(f, encoding='latin1')
+                train_set, valid_set, test_set = pickle.load(f, encoding='latin1')
             except:
-                train_set, valid_set, test_set = pkl.load(f)
+                train_set, valid_set, test_set = pickle.load(f)
         return [train_set[0], train_set[1]], [valid_set[0], valid_set[1]], [test_set[0], test_set[1]]
 
     def permutation_invariant(self, n=None):

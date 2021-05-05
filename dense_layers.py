@@ -60,9 +60,9 @@ class DenseMNF(Layer):
                 self.flow_q = MaskedNVPFlow(dim_in, n_flows=self.n_flows_q, name=self.name + '_fq', n_hidden=0,
                                             dim_h=self.flow_dim_h,  scope=self.name)
 
-        print 'Built layer', self.name, 'prior_var: {}'.format(self.prior_var), \
+        print ('Built layer', self.name, 'prior_var: {}'.format(self.prior_var), \
             'flows_q: {}, flows_r: {}, use_z: {}'.format(self.n_flows_q, self.n_flows_r, self.use_z), \
-            'learn_p: {}, thres_var: {}'.format(self.learn_p, self.thres_var)
+            'learn_p: {}, thres_var: {}'.format(self.learn_p, self.thres_var))
 
     def sample_z(self, size_M=1, sample=True):
         if not self.use_z:

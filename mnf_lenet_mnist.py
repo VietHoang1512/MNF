@@ -1,20 +1,23 @@
 import tensorflow as tf
 import numpy as np
 from progressbar import ETA, Bar, Percentage, ProgressBar
-from keras.utils.np_utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 from mnist import MNIST
-import time, os
+import time
+import os
 from wrappers import MNFLeNet
 
 
 def train():
     mnist = MNIST()
     (xtrain, ytrain), (xvalid, yvalid), (xtest, ytest) = mnist.images()
-    xtrain, xvalid, xtest = np.transpose(xtrain, [0, 2, 3, 1]), np.transpose(xvalid, [0, 2, 3, 1]), np.transpose(xtest, [0, 2, 3, 1])
-    ytrain, yvalid, ytest = to_categorical(ytrain, 10), to_categorical(yvalid, 10), to_categorical(ytest, 10)
+    xtrain, xvalid, xtest = np.transpose(xtrain, [0, 2, 3, 1]), np.transpose(
+        xvalid, [0, 2, 3, 1]), np.transpose(xtest, [0, 2, 3, 1])
+    ytrain, yvalid, ytest = to_categorical(ytrain, 10), to_categorical(
+        yvalid, 10), to_categorical(ytest, 10)
 
     N, height, width, n_channels = xtrain.shape
-    iter_per_epoch = N / 100
+    iter_per_epoch = int(N / 100)
 
     sess = tf.InteractiveSession()
 
@@ -36,7 +39,8 @@ def train():
         tf.summary.scalar('KL prior', regs)
 
     with tf.name_scope('cross_entropy'):
-        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_))
+        cross_entropy = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(logits=y, labels=y_))
         tf.summary.scalar('Loglike', cross_entropy)
 
     global_step = tf.Variable(0, trainable=False)
@@ -45,9 +49,11 @@ def train():
         with tf.name_scope('annealing_beta'):
             max_zero_step = number_zero * iter_per_epoch
             original_anneal = original_zero * iter_per_epoch
-            beta_t_val = tf.cast((tf.cast(global_step, tf.float32) - max_zero_step) / original_anneal, tf.float32)
+            beta_t_val = tf.cast(
+                (tf.cast(global_step, tf.float32) - max_zero_step) / original_anneal, tf.float32)
             beta_t = tf.maximum(beta_t_val, 0.)
-            annealing = tf.minimum(1., tf.cond(global_step < max_zero_step, lambda: tf.zeros((1,))[0], lambda: beta_t))
+            annealing = tf.minimum(1., tf.cond(
+                global_step < max_zero_step, lambda: tf.zeros((1,))[0], lambda: beta_t))
             tf.summary.scalar('annealing beta', annealing)
     else:
         annealing = 1.
@@ -56,7 +62,8 @@ def train():
         lowerbound = cross_entropy + annealing * regs
         tf.summary.scalar('Lower bound', lowerbound)
 
-    train_step = tf.train.AdamOptimizer(learning_rate=FLAGS.lr).minimize(lowerbound, global_step=global_step)
+    train_step = tf.train.AdamOptimizer(learning_rate=FLAGS.lr).minimize(
+        lowerbound, global_step=global_step)
 
     with tf.name_scope('accuracy'):
         correct_prediction = tf.equal(tf.argmax(yd, 1), tf.argmax(y_, 1))
@@ -64,7 +71,8 @@ def train():
         tf.summary.scalar('Accuracy', accuracy)
 
     merged = tf.summary.merge_all()
-    train_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/train', sess.graph)
+    train_writer = tf.summary.FileWriter(
+        FLAGS.summaries_dir + '/train', sess.graph)
 
     tf.add_to_collection('logits', y)
     tf.add_to_collection('logits_map', yd)
@@ -81,36 +89,40 @@ def train():
                                                                                   FLAGS.thres_var)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    print 'Will save model as: {}'.format(model_dir + 'model')
+    print('Will save model as: {}'.format(model_dir + 'model'))
     # Train
-    for epoch in xrange(FLAGS.epochs):
-        widgets = ["epoch {}/{}|".format(epoch + 1, FLAGS.epochs), Percentage(), Bar(), ETA()]
+    for epoch in range(FLAGS.epochs):
+        widgets = [
+            "epoch {}/{}|".format(epoch + 1, FLAGS.epochs), Percentage(), Bar(), ETA()]
         pbar = ProgressBar(iter_per_epoch, widgets=widgets)
         pbar.start()
         np.random.shuffle(idx)
         t0 = time.time()
-        for j in xrange(iter_per_epoch):
+        for j in range(iter_per_epoch):
             steps += 1
             pbar.update(j)
             batch = np.random.choice(idx, 100)
             if j == (iter_per_epoch - 1):
-                summary, _ = sess.run([merged, train_step], feed_dict={x: xtrain[batch], y_: ytrain[batch]})
+                summary, _ = sess.run([merged, train_step], feed_dict={
+                                      x: xtrain[batch], y_: ytrain[batch]})
                 train_writer.add_summary(summary,  steps)
                 train_writer.flush()
             else:
-                sess.run(train_step, feed_dict={x: xtrain[batch], y_: ytrain[batch]})
+                sess.run(train_step, feed_dict={
+                         x: xtrain[batch], y_: ytrain[batch]})
 
         # the accuracy here is calculated by a crude MAP so as to have fast evaluation
         # it is much better if we properly integrate over the parameters by averaging across multiple samples
         tacc = sess.run(accuracy, feed_dict={x: xvalid, y_: yvalid})
-        string = 'Epoch {}/{}, valid_acc: {:0.3f}'.format(epoch + 1, FLAGS.epochs, tacc)
+        string = 'Epoch {}/{}, valid_acc: {:0.3f}'.format(
+            epoch + 1, FLAGS.epochs, tacc)
 
         if (epoch + 1) % 10 == 0:
             string += ', model_save: True'
             saver.save(sess, model_dir + 'model')
 
         string += ', dt: {:0.3f}'.format(time.time() - t0)
-        print string
+        print(string)
 
     saver.save(sess, model_dir + 'model')
     train_writer.close()
@@ -119,14 +131,15 @@ def train():
     widgets = ["Sampling |", Percentage(), Bar(), ETA()]
     pbar = ProgressBar(FLAGS.L, widgets=widgets)
     pbar.start()
-    for i in xrange(FLAGS.L):
+    for i in range(FLAGS.L):
         pbar.update(i)
-        for j in xrange(xtest.shape[0] / 100):
+        for j in range(xtest.shape[0] / 100):
             pyxi = sess.run(pyx, feed_dict={x: xtest[j * 100:(j + 1) * 100]})
             preds[j * 100:(j + 1) * 100] += pyxi / FLAGS.L
-    print
-    sample_accuracy = np.mean(np.equal(np.argmax(preds, 1), np.argmax(ytest, 1)))
-    print 'Sample test accuracy: {}'.format(sample_accuracy)
+
+    sample_accuracy = np.mean(
+        np.equal(np.argmax(preds, 1), np.argmax(ytest, 1)))
+    print('Sample test accuracy: {}'.format(sample_accuracy))
 
 
 def main():
@@ -134,6 +147,7 @@ def main():
         tf.gfile.DeleteRecursively(FLAGS.summaries_dir)
     tf.gfile.MakeDirs(FLAGS.summaries_dir)
     train()
+
 
 if __name__ == '__main__':
     import argparse

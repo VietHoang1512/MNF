@@ -11,7 +11,7 @@ flags = tf.app.flags
 FLAGS = flags.FLAGS
 sigma_init = 0.01
 
-DATA_DIR = os.environ['DATA_DIR']
+# DATA_DIR = os.environ['DATA_DIR']
 dtype = tf.float32
 
 

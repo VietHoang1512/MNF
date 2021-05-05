@@ -12,7 +12,7 @@ class Layer(object):
         self.logging = logging
         self.nonlinearity = nonlin
         self.build()
-        print 'Logging: {}'.format(self.logging)
+        print ('Logging: {}'.format(self.logging))
 
     def __call__(self, x, sample=True, **kwargs):
         with tf.name_scope(self.name):
