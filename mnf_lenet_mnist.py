@@ -133,7 +133,7 @@ def train():
     pbar.start()
     for i in range(FLAGS.L):
         pbar.update(i)
-        for j in range(xtest.shape[0] / 100):
+        for j in range(int(xtest.shape[0] / 100)):
             pyxi = sess.run(pyx, feed_dict={x: xtest[j * 100:(j + 1) * 100]})
             preds[j * 100:(j + 1) * 100] += pyxi / FLAGS.L
 
